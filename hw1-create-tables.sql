@@ -29,6 +29,13 @@ CREATE TABLE MOVIE_DIRECTORS (
 );
 
 CREATE TABLE GENRE (
-  mid   INTEGER REFERENCES MOVIE(id),
+  mid   INTEGER,
   genre TEXT
 );
+
+\copy ACTOR           from '/Users/kstone/homework/544/hw1/imdb2010/actor-ascii.txt'           with delimiter '|' csv quote E'\n'
+\copy MOVIE           from '/Users/kstone/homework/544/hw1/imdb2010/movie-ascii.txt'           with delimiter '|' csv quote E'\n'
+\copy DIRECTORS       from '/Users/kstone/homework/544/hw1/imdb2010/directors-ascii.txt'       with delimiter '|' csv quote E'\n'
+\copy CASTS           from '/Users/kstone/homework/544/hw1/imdb2010/casts-ascii.txt'           with delimiter '|' csv quote E'\n'
+\copy MOVIE_DIRECTORS from '/Users/kstone/homework/544/hw1/imdb2010/movie_directors-ascii.txt' with delimiter '|' csv quote E'\n'
+\copy GENRE           from '/Users/kstone/homework/544/hw1/imdb2010/genre-ascii.txt'           with delimiter '|' csv quote E'\n'
