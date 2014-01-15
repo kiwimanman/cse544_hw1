@@ -56,8 +56,36 @@ WHERE
   (movie.year < 1900 or movie.year > 2000) and
   genre.mid = movie.id;
 
--- #4
+-- #4 - 47 rows
+SELECT
+  directors.fname,
+  directors.lname,
+  count(movie_directors) as total_films 
+FROM 
+  directors,
+  movie_directors
+WHERE
+  directors.id = movie_directors.did
+GROUP BY directors.id 
+HAVING count(*) > 500
+ORDER BY total_films DESC;
 
+-- #5 - 24 rows
+SELECT 
+  actors.id,
+  actors.fname,
+  actors.lname,
+  count(casts)
+FROM
+  actor as actors,
+  movie AS movies,
+  casts
+WHERE
+  actors.id = casts.pid AND
+  casts.mid = movies.id AND
+  movies.year = 2010
+GROUP BY movies.id, actors.id, casts.pid, casts.mid
+HAVING count(DISTINCT casts) >= 5;
 
 
 
