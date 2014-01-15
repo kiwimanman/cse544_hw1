@@ -72,22 +72,36 @@ ORDER BY total_films DESC;
 
 -- #5 - 24 rows
 SELECT 
-  actors.id,
   actors.fname,
   actors.lname,
+  movies.name,
   count(casts)
-FROM
-  actor as actors,
-  movie AS movies,
-  casts
+FROM actor AS actors
+JOIN casts ON actors.id = casts.pid
+JOIN movie AS movies ON casts.mid = movies.id
 WHERE
-  actors.id = casts.pid AND
-  casts.mid = movies.id AND
   movies.year = 2010
-GROUP BY movies.id, actors.id, casts.pid, casts.mid
+GROUP BY actors.id, casts.pid, casts.mid, movies.id
 HAVING count(DISTINCT casts) >= 5;
 
-
+-- #6 - 137 rows
+SELECT 
+  actors.fname,
+  actors.lname,
+  movies.name,
+  casts.role
+FROM actor AS actors
+JOIN casts ON actors.id = casts.pid
+JOIN movie AS movies ON casts.mid = movies.id
+WHERE
+  movies.year = 2010 AND
+  (
+    SELECT count(DISTINCT subcast)
+    FROM casts as subcast
+    WHERE subcast.pid = actors.id AND subcast.mid = movies.id
+    GROUP BY subcast.pid, subcast.mid
+  ) >= 5
+;
 
 
 
