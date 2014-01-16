@@ -103,8 +103,102 @@ WHERE
   ) >= 5
 ;
 
+-- #7 - 129 rows
+SELECT
+  movies.year,
+  count(movies)
+FROM
+  movie AS movies
+WHERE
+  NOT EXISTS (
+    SELECT *
+    FROM actor AS actors
+    JOIN casts ON actors.id = casts.pid
+    WHERE
+      actors.gender = 'M' AND
+      casts.mid = movies.id
+  )
+GROUP BY movies.year
+ORDER BY movies.year DESC;
 
+-- #8 - 136 rows
+SELECT
+  movies.year,
+  sum(CASE WHEN NOT EXISTS (
+    SELECT *
+    FROM actor AS actors
+    JOIN casts ON actors.id = casts.pid
+    WHERE
+      actors.gender = 'M' AND
+      casts.mid = movies.id
+  ) THEN 1 ELSE 0 END) * 100.0 / count(movies),
+  count(movies)
+FROM
+  movie as movies
+GROUP BY movies.year
+ORDER BY movies.year DESC;
 
+-- #9 - 1 row
+SELECT
+  movies.name,
+  role_agg.count
+FROM movie as movies,
+  (SELECT
+    movie.id as id,
+    count(DISTINCT casts.pid) as count
+  FROM casts, movie
+  WHERE movie.id = casts.mid
+  GROUP BY movie.id) AS role_agg
+WHERE
+  movies.id = role_agg.id AND
+  role_agg.count = (
+    SELECT max(role_agg.count)
+    FROM
+      (SELECT
+        movie.id AS id,
+        count(DISTINCT casts.pid) AS count
+      FROM casts, movie
+      WHERE movie.id = casts.mid
+      GROUP BY movie.id) as role_agg);
 
+-- #10 - 1 row
+SELECT
+  decade_agg.year,
+  decade_agg.count
+FROM (
+  SELECT a.year, count(b)
+  FROM (SELECT DISTINCT year FROM movie)
+  AS a JOIN movie AS b on b.year >= a.year and b.year < a.year + 10
+  GROUP BY a.year
+) AS decade_agg
+WHERE decade_agg.count = (
+  SELECT max(decade_agg.count)
+  FROM (
+    SELECT a.year, count(b)
+    FROM (SELECT DISTINCT year FROM movie)
+    AS a JOIN movie AS b on b.year >= a.year and b.year < a.year + 10
+    GROUP BY a.year
+  ) AS decade_agg
+);
+
+-- #11 - 1 row
+select count(second_order)
+from (select DISTINCT second_order.pid
+from casts as first_movie
+join casts as first_order on first_movie.mid = first_order.mid
+join casts as second_movie on first_order.pid = second_movie.pid
+join casts as second_order on second_movie.mid = second_order.mid 
+where 
+  first_movie.pid = 52435 and 
+  first_movie.mid != second_movie.mid AND
+  52435 != first_order.pid AND
+  52435 != second_order.pid AND
+  first_order.pid != second_order.pid
+EXCEPT
+SELECT DISTINCT first_order.pid
+from casts as first_movie
+join casts as first_order on first_movie.mid = first_order.mid
+where
+  first_movie.pid = 52435 and 52435 != first_order.pid) as second_order;
 
 
