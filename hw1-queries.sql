@@ -60,13 +60,13 @@ WHERE
 SELECT
   directors.fname,
   directors.lname,
-  count(movie_directors) as total_films 
+  count(movie_directors.mid) as total_films 
 FROM 
   directors,
   movie_directors
 WHERE
   directors.id = movie_directors.did
-GROUP BY directors.id 
+GROUP BY directors.id, directors.fname, directors.lname
 HAVING count(*) > 500
 ORDER BY total_films DESC;
 
@@ -75,14 +75,14 @@ SELECT
   actors.fname,
   actors.lname,
   movies.name,
-  count(casts)
+  count(DISTINCT casts.role)
 FROM actor AS actors
 JOIN casts ON actors.id = casts.pid
 JOIN movie AS movies ON casts.mid = movies.id
 WHERE
   movies.year = 2010
-GROUP BY actors.id, casts.pid, casts.mid, movies.id
-HAVING count(DISTINCT casts) >= 5;
+GROUP BY actors.id, actors.fname, actors.lname, casts.pid, casts.mid, movies.id, movies.name
+HAVING count(DISTINCT casts.role) >= 5;
 
 -- #6 - 137 rows
 SELECT 
@@ -96,7 +96,7 @@ JOIN movie AS movies ON casts.mid = movies.id
 WHERE
   movies.year = 2010 AND
   (
-    SELECT count(DISTINCT subcast)
+    SELECT count(DISTINCT subcast.role)
     FROM casts as subcast
     WHERE subcast.pid = actors.id AND subcast.mid = movies.id
     GROUP BY subcast.pid, subcast.mid
@@ -106,7 +106,7 @@ WHERE
 -- #7 - 129 rows
 SELECT
   movies.year,
-  count(movies)
+  count(movies.id)
 FROM
   movie AS movies
 WHERE
@@ -122,20 +122,19 @@ GROUP BY movies.year
 ORDER BY movies.year DESC;
 
 -- #8 - 136 rows
-SELECT
-  movies.year,
-  sum(CASE WHEN NOT EXISTS (
-    SELECT *
-    FROM actor AS actors
-    JOIN casts ON actors.id = casts.pid
-    WHERE
-      actors.gender = 'M' AND
-      casts.mid = movies.id
-  ) THEN 1 ELSE 0 END) * 100.0 / count(movies),
-  count(movies)
-FROM
-  movie as movies
-GROUP BY movies.year
+SELECT movies.year, female_casts.count * 100.0 / count(movies.id), count(movies.id)
+FROM movie as movies
+JOIN (SELECT movies.year, count(movies.id) as count
+    FROM movie AS movies
+    WHERE NOT EXISTS (
+      SELECT *
+      FROM actor AS actors
+      JOIN casts ON actors.id = casts.pid
+      WHERE
+          actors.gender = 'M' AND casts.mid = movies.id)
+      GROUP BY movies.year) as female_casts
+ON movies.year = female_casts.year
+GROUP BY movies.year, female_casts.count
 ORDER BY movies.year DESC;
 
 -- #9 - 1 row
@@ -166,7 +165,7 @@ SELECT
   decade_agg.year,
   decade_agg.count
 FROM (
-  SELECT a.year, count(b)
+  SELECT a.year, count(b.id) as count
   FROM (SELECT DISTINCT year FROM movie)
   AS a JOIN movie AS b on b.year >= a.year and b.year < a.year + 10
   GROUP BY a.year
@@ -174,7 +173,7 @@ FROM (
 WHERE decade_agg.count = (
   SELECT max(decade_agg.count)
   FROM (
-    SELECT a.year, count(b)
+    SELECT a.year, count(b.id) as count
     FROM (SELECT DISTINCT year FROM movie)
     AS a JOIN movie AS b on b.year >= a.year and b.year < a.year + 10
     GROUP BY a.year
@@ -182,8 +181,8 @@ WHERE decade_agg.count = (
 );
 
 -- #11 - 1 row
-select count(second_order)
-from (select DISTINCT second_order.pid
+select count(second_order_pid)
+from (select DISTINCT second_order.pid as second_order_pid
 from casts as first_movie
 join casts as first_order on first_movie.mid = first_order.mid
 join casts as second_movie on first_order.pid = second_movie.pid
