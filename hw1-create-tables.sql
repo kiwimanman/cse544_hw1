@@ -1,3 +1,6 @@
+-- Keith Stone
+-- CSE 544 HW 1
+
 CREATE TABLE ACTOR (
   id     INTEGER PRIMARY KEY ,
   fname  TEXT,

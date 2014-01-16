@@ -1,3 +1,6 @@
+-- Keith Stone
+-- CSE 544 HW 1
+
 -- Speed joins from actors to casts, specifically #5
 CREATE INDEX ON casts (pid);
 

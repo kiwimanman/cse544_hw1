@@ -1,3 +1,6 @@
+-- Keith Stone
+-- CSE 544 HW 1
+
 -- #1 - 13 Rows
 SELECT actors.fname, actors.lname
 FROM actor AS actors,
